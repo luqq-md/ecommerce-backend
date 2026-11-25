@@ -6,7 +6,7 @@ spring:
     name: ecommerce-backend
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ecommerce}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:ecommerce}
     username: ${DB_USER:ecom_user}
     password: ${DB_PASSWORD:123Ggg###}
     hikari:
@@ -38,11 +38,17 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       acks: all
+      retries: 3
+      properties:
+        enable.idempotence: true
     consumer:
-      group-id: ecommerce-group
+      group-id: ${KAFKA_GROUP_ID:ecommerce-group} # or notification-service
       auto-offset-reset: earliest
+      enable-auto-commit: false
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: record
 
 management:
   endpoints:
@@ -52,7 +58,12 @@ management:
   endpoint:
     health:
       show-details: always
+
 app:
+  outbox:
+    poll-interval-ms: 2000
+    batch-size: 50
+    max-retries: 5
   jwt:
     secret: ${JWT_SECRET:c3VwZXItc2VjcmV0LWp3dC1rZXktZm9yLWVjb21tZXJjZS1iYWNrZW5kLWRldi1vbmx5LTI1NmJpdA==}
     access-token-expiration-ms: 900000      # 15 minutes
